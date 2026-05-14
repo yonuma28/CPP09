@@ -598,6 +598,8 @@ void PmergeMe::printAfter(const std::vector<int>& sorted) const
 
 void PmergeMe::run(int argc, char** argv)
 {
+	parseInput(argc, argv);
+
 	std::vector<int> sortedVector;
 	std::deque<int> sortedDeque;
 	std::clock_t vectorStart;
@@ -607,7 +609,6 @@ void PmergeMe::run(int argc, char** argv)
 	double vectorElapsed;
 	double dequeElapsed;
 
-	parseInput(argc, argv);
 	printBefore();
 	vectorStart = std::clock();
 	sortedVector = sortVector(_vectorInput);
