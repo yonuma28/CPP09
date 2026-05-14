@@ -15,10 +15,10 @@ $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	-cmd /C del /Q $(OBJ) 2>NUL
+	rm -f $(OBJ)
 
 fclean: clean
-	-cmd /C del /Q $(NAME).exe $(NAME) 2>NUL
+	rm -f $(NAME)
 
 re: fclean all
 
