@@ -204,8 +204,6 @@ void BitcoinExchange::loadDatabase(const std::string& dbPath)
 
 	if (!file.is_open())
 		throw std::runtime_error("Error: could not open file.");
-	if (!std::getline(file, line))
-		throw std::runtime_error("Error: could not open file.");
 	while (std::getline(file, line))
 	{
 		std::string date;
@@ -227,8 +225,6 @@ void BitcoinExchange::processInputFile(const std::string& inputPath) const
 
 	if (!file.is_open())
 		throw std::runtime_error("Error: could not open file.");
-	if (!std::getline(file, line))
-		return;
 	while (std::getline(file, line))
 	{
 		std::string trimmedLine = trim(line);
@@ -239,6 +235,8 @@ void BitcoinExchange::processInputFile(const std::string& inputPath) const
 		double rate;
 
 		if (trimmedLine.empty())
+			continue;
+		if (trimmedLine == "date | value")
 			continue;
 		separator = line.find('|');
 		if (separator == std::string::npos)
