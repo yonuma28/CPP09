@@ -50,14 +50,14 @@ class RPN
 		 * @param token 判定対象の token。
 		 * @return `+`, `-`, `*`, `/` のいずれかなら true。
 		 */
-		static bool isOperator(const std::string& token);
+		bool isOperator(const std::string& token);
 
 		/**
 		 * @brief token が 1 桁の数値か判定する。
 		 * @param token 判定対象の token。
 		 * @return `0` から `9` の 1 文字なら true。
 		 */
-		static bool isNumberToken(const std::string& token);
+		bool isNumberToken(const std::string& token);
 
 		/**
 		 * @brief 2 つの値に演算子を適用する。
@@ -67,7 +67,12 @@ class RPN
 		 * @return 演算結果。
 		 * @throw std::runtime_error 不正な演算子または 0 除算の場合。
 		 */
-		static long applyOperator(long lhs, long rhs, const std::string& op);
+		long applyOperator(long lhs, long rhs, const std::string& op);
+
+		long checkedAdd(long lhs, long rhs);
+		long checkedSubtract(long lhs, long rhs);
+		long checkedMultiply(long lhs, long rhs);
+		long checkedDivide(long lhs, long rhs);
 };
 
 #endif // RPN_HPP

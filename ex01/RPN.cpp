@@ -4,62 +4,59 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace
+long RPN::checkedAdd(long lhs, long rhs)
 {
-	long checkedAdd(long lhs, long rhs)
-	{
-		if ((rhs > 0 && lhs > LONG_MAX - rhs)
-			|| (rhs < 0 && lhs < LONG_MIN - rhs))
-			throw std::runtime_error("Error");
-		return lhs + rhs;
-	}
+	if ((rhs > 0 && lhs > LONG_MAX - rhs)
+		|| (rhs < 0 && lhs < LONG_MIN - rhs))
+		throw std::runtime_error("Error");
+	return lhs + rhs;
+}
 
-	long checkedSubtract(long lhs, long rhs)
-	{
-		if ((rhs > 0 && lhs < LONG_MIN + rhs)
-			|| (rhs < 0 && lhs > LONG_MAX + rhs))
-			throw std::runtime_error("Error");
-		return lhs - rhs;
-	}
+long RPN::checkedSubtract(long lhs, long rhs)
+{
+	if ((rhs > 0 && lhs < LONG_MIN + rhs)
+		|| (rhs < 0 && lhs > LONG_MAX + rhs))
+		throw std::runtime_error("Error");
+	return lhs - rhs;
+}
 
-	long checkedMultiply(long lhs, long rhs)
+long RPN::checkedMultiply(long lhs, long rhs)
+{
+	if (lhs == 0 || rhs == 0)
+		return 0;
+	if (lhs > 0)
 	{
-		if (lhs == 0 || rhs == 0)
-			return 0;
-		if (lhs > 0)
+		if (rhs > 0)
 		{
-			if (rhs > 0)
-			{
-				if (lhs > LONG_MAX / rhs)
-					throw std::runtime_error("Error");
-			}
-			else if (rhs < LONG_MIN / lhs)
+			if (lhs > LONG_MAX / rhs)
+				throw std::runtime_error("Error");
+		}
+		else if (rhs < LONG_MIN / lhs)
+			throw std::runtime_error("Error");
+	}
+	else
+	{
+		if (rhs > 0)
+		{
+			if (lhs < LONG_MIN / rhs)
 				throw std::runtime_error("Error");
 		}
 		else
 		{
-			if (rhs > 0)
-			{
-				if (lhs < LONG_MIN / rhs)
-					throw std::runtime_error("Error");
-			}
-			else
-			{
-				if (lhs != 0 && rhs < LONG_MAX / lhs)
-					throw std::runtime_error("Error");
-			}
+			if (lhs != 0 && rhs < LONG_MAX / lhs)
+				throw std::runtime_error("Error");
 		}
-		return lhs * rhs;
 	}
+	return lhs * rhs;
+}
 
-	long checkedDivide(long lhs, long rhs)
-	{
-		if (rhs == 0)
-			throw std::runtime_error("Error");
-		if (lhs == LONG_MIN && rhs == -1)
-			throw std::runtime_error("Error");
-		return lhs / rhs;
-	}
+long RPN::checkedDivide(long lhs, long rhs)
+{
+	if (rhs == 0)
+		throw std::runtime_error("Error");
+	if (lhs == LONG_MIN && rhs == -1)
+		throw std::runtime_error("Error");
+	return lhs / rhs;
 }
 
 RPN::RPN()
