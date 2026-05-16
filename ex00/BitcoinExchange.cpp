@@ -5,6 +5,26 @@
 #include <iostream>
 #include <sstream>
 
+namespace
+{
+	const char* const kOpenFileError = "Error: could not open file.";
+	const char* const kBadInputPrefix = "Error: bad input => ";
+	const char* const kNegativeNumberError = "Error: not a positive number.";
+	const char* const kTooLargeNumberError = "Error: too large a number.";
+	const double kMaxInputValue = 1000.0;
+
+	bool isWhitespace(char c)
+	{
+		return (c == ' ' || c == '\t' || c == '\n' || c == '\r'
+			|| c == '\f' || c == '\v');
+	}
+
+	void printBadInput(const std::string& line)
+	{
+		std::cout << kBadInputPrefix << line << std::endl;
+	}
+}
+
 BitcoinExchange::BitcoinExchange(void)
 {
 }
@@ -34,13 +54,9 @@ std::string BitcoinExchange::trim(const std::string& s)
 	std::string::size_type start = 0;
 	std::string::size_type end = s.length();
 
-	while (start < end && (s[start] == ' ' || s[start] == '\t'
-			|| s[start] == '\n' || s[start] == '\r'
-			|| s[start] == '\f' || s[start] == '\v'))
+	while (start < end && isWhitespace(s[start]))
 		++start;
-	while (end > start && (s[end - 1] == ' ' || s[end - 1] == '\t'
-			|| s[end - 1] == '\n' || s[end - 1] == '\r'
-			|| s[end - 1] == '\f' || s[end - 1] == '\v'))
+	while (end > start && isWhitespace(s[end - 1]))
 		--end;
 	return s.substr(start, end - start);
 }
@@ -170,20 +186,20 @@ bool BitcoinExchange::parseDatabaseLine(const std::string& line, std::string& da
 	return true;
 }
 
-bool BitcoinExchange::parseInputLine(const std::string& line, std::string& date, double& value)
+bool BitcoinExchange::splitInputLine(const std::string& line, std::string& date, std::string& valueField)
 {
 	std::string::size_type separator = line.find('|');
-	std::string rawValue;
 
 	if (separator == std::string::npos)
 		return false;
 	date = trim(line.substr(0, separator));
-	rawValue = trim(line.substr(separator + 1));
-	if (!isValidDate(date))
-		return false;
-	if (!parsePositiveNumber(rawValue, value))
-		return false;
+	valueField = trim(line.substr(separator + 1));
 	return true;
+}
+
+bool BitcoinExchange::isNegativeValue(const std::string& valueField)
+{
+	return (!valueField.empty() && valueField[0] == '-');
 }
 
 bool BitcoinExchange::findRateForDate(const std::string& date, double& rate) const
@@ -192,6 +208,7 @@ bool BitcoinExchange::findRateForDate(const std::string& date, double& rate) con
 
 	if (it == this->_rates.begin())
 		return false;
+	// `upper_bound` が指す 1 つ前が、指定日以下で最も近いレートになる。
 	--it;
 	rate = it->second;
 	return true;
@@ -203,7 +220,9 @@ void BitcoinExchange::loadDatabase(const std::string& dbPath)
 	std::string line;
 
 	if (!file.is_open())
-		throw std::runtime_error("Error: could not open file.");
+		throw std::runtime_error(kOpenFileError);
+	if (!std::getline(file, line))
+		throw std::runtime_error(kOpenFileError);
 	while (std::getline(file, line))
 	{
 		std::string date;
@@ -215,7 +234,42 @@ void BitcoinExchange::loadDatabase(const std::string& dbPath)
 			this->_rates[date] = rate;
 	}
 	if (this->_rates.empty())
-		throw std::runtime_error("Error: could not open file.");
+		throw std::runtime_error(kOpenFileError);
+}
+
+void BitcoinExchange::processInputLine(const std::string& line) const
+{
+	std::string date;
+	std::string valueField;
+	double value;
+	double rate;
+
+	if (!splitInputLine(line, date, valueField) || !isValidDate(date))
+	{
+		printBadInput(line);
+		return;
+	}
+	if (isNegativeValue(valueField))
+	{
+		std::cout << kNegativeNumberError << std::endl;
+		return;
+	}
+	if (!parsePositiveNumber(valueField, value))
+	{
+		printBadInput(line);
+		return;
+	}
+	if (value > kMaxInputValue)
+	{
+		std::cout << kTooLargeNumberError << std::endl;
+		return;
+	}
+	if (!findRateForDate(date, rate))
+	{
+		printBadInput(line);
+		return;
+	}
+	std::cout << date << " => " << value << " = " << (value * rate) << std::endl;
 }
 
 void BitcoinExchange::processInputFile(const std::string& inputPath) const
@@ -224,53 +278,12 @@ void BitcoinExchange::processInputFile(const std::string& inputPath) const
 	std::string line;
 
 	if (!file.is_open())
-		throw std::runtime_error("Error: could not open file.");
+		throw std::runtime_error(kOpenFileError);
+	if (!std::getline(file, line))
+		return;
 	while (std::getline(file, line))
 	{
-		std::string trimmedLine = trim(line);
-		std::string date;
-		std::string valueField;
-		std::string::size_type separator;
-		double value;
-		double rate;
-
-		if (trimmedLine.empty())
-			continue;
-		if (trimmedLine == "date | value")
-			continue;
-		separator = line.find('|');
-		if (separator == std::string::npos)
-		{
-			std::cout << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		date = trim(line.substr(0, separator));
-		valueField = trim(line.substr(separator + 1));
-		if (!isValidDate(date))
-		{
-			std::cout << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		if (!valueField.empty() && valueField[0] == '-')
-		{
-			std::cout << "Error: not a positive number." << std::endl;
-			continue;
-		}
-		if (!parseInputLine(line, date, value))
-		{
-			std::cout << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		if (value > 1000.0)
-		{
-			std::cout << "Error: too large a number." << std::endl;
-			continue;
-		}
-		if (!findRateForDate(date, rate))
-		{
-			std::cout << "Error: bad input => " << line << std::endl;
-			continue;
-		}
-		std::cout << date << " => " << value << " = " << (value * rate) << std::endl;
+		if (!trim(line).empty())
+			processInputLine(line);
 	}
 }

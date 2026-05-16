@@ -92,13 +92,26 @@ class BitcoinExchange
 		static bool parseDatabaseLine(const std::string& line, std::string& date, double& rate);
 
 		/**
-		 * @brief 入力ファイルの 1 行を解析して日付と値を取り出す。
+		 * @brief 入力行を `date | value` の 2 項目に分解する。
 		 * @param line 解析対象の 1 行。
 		 * @param date 解析成功時に日付を書き込む出力先。
-		 * @param value 解析成功時に値を書き込む出力先。
-		 * @return 行が有効なら true、無効なら false。
+		 * @param valueField 解析成功時に値部分の文字列を書き込む出力先。
+		 * @return 区切り文字 `|` を含む場合 true、そうでなければ false。
 		 */
-		static bool parseInputLine(const std::string& line, std::string& date, double& value);
+		static bool splitInputLine(const std::string& line, std::string& date, std::string& valueField);
+
+		/**
+		 * @brief 入力値が先頭 `-` を持つ負数表記か判定する。
+		 * @param valueField 入力行から取り出した値部分。
+		 * @return 負数表記なら true、そうでなければ false。
+		 */
+		static bool isNegativeValue(const std::string& valueField);
+
+		/**
+		 * @brief 入力ファイルの 1 行を評価して結果またはエラーを出力する。
+		 * @param line 評価対象の入力行。
+		 */
+		void processInputLine(const std::string& line) const;
 
 		/**
 		 * @brief 指定日以下で最も近いレートを検索する。

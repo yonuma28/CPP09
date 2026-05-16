@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		BitcoinExchange btc("data.csv");
-		btc.processInputFile(argv[1]);
+		BitcoinExchange exchange("data.csv");
+		exchange.processInputFile(argv[1]);
 	}
 	catch (const std::exception& e)
 	{
