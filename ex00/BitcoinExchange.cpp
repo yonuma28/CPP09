@@ -258,7 +258,7 @@ void BitcoinExchange::processInputFile(const std::string& inputPath) const
 			std::cout << "Error: not a positive number." << std::endl;
 			continue;
 		}
-		if (!parsePositiveNumber(valueField, value))
+		if (!parseInputLine(line, date, value))
 		{
 			std::cout << "Error: bad input => " << line << std::endl;
 			continue;
