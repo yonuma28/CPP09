@@ -171,9 +171,7 @@ bool BitcoinExchange::parseDatabaseLine(const std::string& line, std::string& da
 
 	if (trimmed.empty())
 		return false;
-	separator = trimmed.find(',');
-	if (separator == std::string::npos)
-		separator = trimmed.find('\t');
+	separator = trimmed.find('\t');
 	if (separator == std::string::npos)
 		return false;
 	rawDate = trimmed.substr(0, separator);
@@ -208,7 +206,6 @@ bool BitcoinExchange::findRateForDate(const std::string& date, double& rate) con
 
 	if (it == this->_rates.begin())
 		return false;
-	// `upper_bound` が指す 1 つ前が、指定日以下で最も近いレートになる。
 	--it;
 	rate = it->second;
 	return true;
