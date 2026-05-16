@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 
-long RPN::checkedAdd(long lhs, long rhs)
+long RPN::checkedAdd(long lhs, long rhs) const
 {
 	if ((rhs > 0 && lhs > LONG_MAX - rhs)
 		|| (rhs < 0 && lhs < LONG_MIN - rhs))
@@ -12,7 +12,7 @@ long RPN::checkedAdd(long lhs, long rhs)
 	return lhs + rhs;
 }
 
-long RPN::checkedSubtract(long lhs, long rhs)
+long RPN::checkedSubtract(long lhs, long rhs) 	const
 {
 	if ((rhs > 0 && lhs < LONG_MIN + rhs)
 		|| (rhs < 0 && lhs > LONG_MAX + rhs))
@@ -20,7 +20,7 @@ long RPN::checkedSubtract(long lhs, long rhs)
 	return lhs - rhs;
 }
 
-long RPN::checkedMultiply(long lhs, long rhs)
+long RPN::checkedMultiply(long lhs, long rhs) const
 {
 	if (lhs == 0 || rhs == 0)
 		return 0;
@@ -50,7 +50,7 @@ long RPN::checkedMultiply(long lhs, long rhs)
 	return lhs * rhs;
 }
 
-long RPN::checkedDivide(long lhs, long rhs)
+long RPN::checkedDivide(long lhs, long rhs) const
 {
 	if (rhs == 0)
 		throw std::runtime_error("Error");
@@ -78,19 +78,19 @@ RPN::~RPN()
 {
 }
 
-bool RPN::isOperator(const std::string& token)
+bool RPN::isOperator(const std::string& token) const
 {
 	return (token.length() == 1
 		&& (token[0] == '+' || token[0] == '-'
 			|| token[0] == '*' || token[0] == '/'));
 }
 
-bool RPN::isNumberToken(const std::string& token)
+bool RPN::isNumberToken(const std::string& token) const
 {
 	return (token.length() == 1 && token[0] >= '0' && token[0] <= '9');
 }
 
-long RPN::applyOperator(long lhs, long rhs, const std::string& op)
+long RPN::applyOperator(long lhs, long rhs, const std::string& op) const
 {
 	if (op == "+")
 		return checkedAdd(lhs, rhs);
