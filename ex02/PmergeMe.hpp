@@ -58,6 +58,16 @@ class PmergeMe
 		std::deque<int> _dequeInput;
 
 		/**
+		 * @brief vector ソート中の値比較回数。
+		 */
+		mutable int _vectorComparisonCount;
+
+		/**
+		 * @brief deque ソート中の値比較回数。
+		 */
+		mutable int _dequeComparisonCount;
+
+		/**
 		 * @brief コマンドライン引数を解析してコンテナへ格納する。
 		 * @param argc コマンドライン引数数。
 		 * @param argv コマンドライン引数配列。

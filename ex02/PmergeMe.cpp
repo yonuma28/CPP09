@@ -121,7 +121,8 @@ namespace
 		return chain.size();
 	}
 
-	void insertVectorNodeByBound(std::vector<VectorNode>& chain, const VectorNode& node, std::size_t high)
+	void insertVectorNodeByBound(std::vector<VectorNode>& chain, const VectorNode& node,
+		std::size_t high, int& comparisonCount)
 	{
 		std::size_t low = 0;
 
@@ -129,6 +130,7 @@ namespace
 		{
 			std::size_t mid = low + (high - low) / 2;
 
+			++comparisonCount;
 			if (chain[mid].value < node.value)
 				low = mid + 1;
 			else
@@ -137,7 +139,8 @@ namespace
 		chain.insert(chain.begin() + static_cast<std::vector<VectorNode>::difference_type>(low), node);
 	}
 
-	void insertDequeNodeByBound(std::deque<DequeNode>& chain, const DequeNode& node, std::size_t high)
+	void insertDequeNodeByBound(std::deque<DequeNode>& chain, const DequeNode& node,
+		std::size_t high, int& comparisonCount)
 	{
 		std::size_t low = 0;
 
@@ -145,6 +148,7 @@ namespace
 		{
 			std::size_t mid = low + (high - low) / 2;
 
+			++comparisonCount;
 			if (chain[mid].value < node.value)
 				low = mid + 1;
 			else
@@ -153,7 +157,8 @@ namespace
 		chain.insert(chain.begin() + static_cast<std::deque<DequeNode>::difference_type>(low), node);
 	}
 
-	void insertVectorPairByBound(std::vector<VectorPair>& chain, const VectorPair& pair, std::size_t high)
+	void insertVectorPairByBound(std::vector<VectorPair>& chain, const VectorPair& pair,
+		std::size_t high, int& comparisonCount)
 	{
 		std::size_t low = 0;
 
@@ -161,6 +166,7 @@ namespace
 		{
 			std::size_t mid = low + (high - low) / 2;
 
+			++comparisonCount;
 			if (chain[mid].large < pair.large)
 				low = mid + 1;
 			else
@@ -169,7 +175,8 @@ namespace
 		chain.insert(chain.begin() + static_cast<std::vector<VectorPair>::difference_type>(low), pair);
 	}
 
-	void insertDequePairByBound(std::deque<DequePair>& chain, const DequePair& pair, std::size_t high)
+	void insertDequePairByBound(std::deque<DequePair>& chain, const DequePair& pair,
+		std::size_t high, int& comparisonCount)
 	{
 		std::size_t low = 0;
 
@@ -177,6 +184,7 @@ namespace
 		{
 			std::size_t mid = low + (high - low) / 2;
 
+			++comparisonCount;
 			if (chain[mid].large < pair.large)
 				low = mid + 1;
 			else
@@ -205,7 +213,8 @@ namespace
 		return DequePair();
 	}
 
-	std::vector<VectorPair> sortVectorPairsByLarge(const std::vector<VectorPair>& input)
+	std::vector<VectorPair> sortVectorPairsByLarge(const std::vector<VectorPair>& input,
+		int& comparisonCount)
 	{
 		std::vector<VectorPendingPair> pendingPairs;
 		std::vector<VectorPair> largePairs;
@@ -222,6 +231,7 @@ namespace
 		{
 			VectorPendingPair pending;
 
+			++comparisonCount;
 			if (input[i].large <= input[i + 1].large)
 			{
 				pending.pair = input[i];
@@ -242,30 +252,37 @@ namespace
 			hasLeftover = true;
 			leftover = input[i];
 		}
-		sortedLargePairs = sortVectorPairsByLarge(largePairs);
+		sortedLargePairs = sortVectorPairsByLarge(largePairs, comparisonCount);
 		mainChain.push_back(findVectorPendingByPartnerId(pendingPairs, sortedLargePairs[0].id));
 		for (i = 0; i < sortedLargePairs.size(); ++i)
 			mainChain.push_back(sortedLargePairs[i]);
-		insertionOrder = buildJacobsthalOrderVector(sortedLargePairs.size());
+		insertionOrder = buildJacobsthalOrderVector(sortedLargePairs.size()
+				+ (hasLeftover ? 1 : 0));
 		for (i = 0; i < insertionOrder.size(); ++i)
 		{
 			std::size_t partnerIndex = insertionOrder[i];
 			std::size_t partnerPos;
-			VectorPair partnerSmall = findVectorPendingByPartnerId(pendingPairs, sortedLargePairs[partnerIndex].id);
+
+			if (hasLeftover && partnerIndex == sortedLargePairs.size())
+			{
+				insertVectorPairByBound(mainChain, leftover, mainChain.size(), comparisonCount);
+				continue;
+			}
+			VectorPair partnerSmall = findVectorPendingByPartnerId(pendingPairs,
+					sortedLargePairs[partnerIndex].id);
 
 			for (partnerPos = 0; partnerPos < mainChain.size(); ++partnerPos)
 			{
 				if (mainChain[partnerPos].id == sortedLargePairs[partnerIndex].id)
 					break;
 			}
-			insertVectorPairByBound(mainChain, partnerSmall, partnerPos);
+			insertVectorPairByBound(mainChain, partnerSmall, partnerPos, comparisonCount);
 		}
-		if (hasLeftover)
-			insertVectorPairByBound(mainChain, leftover, mainChain.size());
 		return mainChain;
 	}
 
-	std::deque<DequePair> sortDequePairsByLarge(const std::deque<DequePair>& input)
+	std::deque<DequePair> sortDequePairsByLarge(const std::deque<DequePair>& input,
+		int& comparisonCount)
 	{
 		std::deque<DequePendingPair> pendingPairs;
 		std::deque<DequePair> largePairs;
@@ -282,6 +299,7 @@ namespace
 		{
 			DequePendingPair pending;
 
+			++comparisonCount;
 			if (input[i].large <= input[i + 1].large)
 			{
 				pending.pair = input[i];
@@ -302,36 +320,45 @@ namespace
 			hasLeftover = true;
 			leftover = input[i];
 		}
-		sortedLargePairs = sortDequePairsByLarge(largePairs);
+		sortedLargePairs = sortDequePairsByLarge(largePairs, comparisonCount);
 		mainChain.push_back(findDequePendingByPartnerId(pendingPairs, sortedLargePairs[0].id));
 		for (i = 0; i < sortedLargePairs.size(); ++i)
 			mainChain.push_back(sortedLargePairs[i]);
-		insertionOrder = buildJacobsthalOrderDeque(sortedLargePairs.size());
+		insertionOrder = buildJacobsthalOrderDeque(sortedLargePairs.size()
+				+ (hasLeftover ? 1 : 0));
 		for (i = 0; i < insertionOrder.size(); ++i)
 		{
 			std::size_t partnerIndex = insertionOrder[i];
 			std::size_t partnerPos;
-			DequePair partnerSmall = findDequePendingByPartnerId(pendingPairs, sortedLargePairs[partnerIndex].id);
+
+			if (hasLeftover && partnerIndex == sortedLargePairs.size())
+			{
+				insertDequePairByBound(mainChain, leftover, mainChain.size(), comparisonCount);
+				continue;
+			}
+			DequePair partnerSmall = findDequePendingByPartnerId(pendingPairs,
+					sortedLargePairs[partnerIndex].id);
 
 			for (partnerPos = 0; partnerPos < mainChain.size(); ++partnerPos)
 			{
 				if (mainChain[partnerPos].id == sortedLargePairs[partnerIndex].id)
 					break;
 			}
-			insertDequePairByBound(mainChain, partnerSmall, partnerPos);
+			insertDequePairByBound(mainChain, partnerSmall, partnerPos, comparisonCount);
 		}
-		if (hasLeftover)
-			insertDequePairByBound(mainChain, leftover, mainChain.size());
 		return mainChain;
 	}
 }
 
 PmergeMe::PmergeMe()
+	: _vectorComparisonCount(0), _dequeComparisonCount(0)
 {
 }
 
 PmergeMe::PmergeMe(const PmergeMe& other)
-	: _vectorInput(other._vectorInput), _dequeInput(other._dequeInput)
+	: _vectorInput(other._vectorInput), _dequeInput(other._dequeInput),
+		_vectorComparisonCount(other._vectorComparisonCount),
+		_dequeComparisonCount(other._dequeComparisonCount)
 {
 }
 
@@ -341,6 +368,8 @@ PmergeMe& PmergeMe::operator=(const PmergeMe& other)
 	{
 		_vectorInput = other._vectorInput;
 		_dequeInput = other._dequeInput;
+		_vectorComparisonCount = other._vectorComparisonCount;
+		_dequeComparisonCount = other._dequeComparisonCount;
 	}
 	return *this;
 }
@@ -404,6 +433,7 @@ void PmergeMe::binaryInsertVector(std::vector<int>& mainChain, int value) const
 	{
 		std::size_t mid = low + (high - low) / 2;
 
+		++_vectorComparisonCount;
 		if (mainChain[mid] < value)
 			low = mid + 1;
 		else
@@ -421,6 +451,7 @@ void PmergeMe::binaryInsertDeque(std::deque<int>& mainChain, int value) const
 	{
 		std::size_t mid = low + (high - low) / 2;
 
+		++_dequeComparisonCount;
 		if (mainChain[mid] < value)
 			low = mid + 1;
 		else
@@ -446,6 +477,7 @@ std::vector<int> PmergeMe::mergeInsertSortVector(const std::vector<int>& input) 
 	{
 		VectorPair pair;
 
+		++_vectorComparisonCount;
 		if (input[i] <= input[i + 1])
 		{
 			pair.small = input[i];
@@ -464,7 +496,7 @@ std::vector<int> PmergeMe::mergeInsertSortVector(const std::vector<int>& input) 
 		hasLeftover = true;
 		leftover = input[i];
 	}
-	sortedPairs = sortVectorPairsByLarge(pairs);
+	sortedPairs = sortVectorPairsByLarge(pairs, _vectorComparisonCount);
 	chain.push_back(VectorNode());
 	chain.back().value = sortedPairs[0].small;
 	chain.back().pairId = sortedPairs[0].id;
@@ -478,23 +510,31 @@ std::vector<int> PmergeMe::mergeInsertSortVector(const std::vector<int>& input) 
 		node.isLarge = true;
 		chain.push_back(node);
 	}
-	insertionOrder = buildJacobsthalOrderVector(sortedPairs.size());
+	insertionOrder = buildJacobsthalOrderVector(sortedPairs.size()
+			+ (hasLeftover ? 1 : 0));
 	for (i = 0; i < insertionOrder.size(); ++i)
 	{
 		std::size_t pairIndex = insertionOrder[i];
-		std::size_t partnerPos = findVectorLargePosition(chain, sortedPairs[pairIndex].id);
+		std::size_t partnerPos;
 		VectorNode node;
 
+		if (hasLeftover && pairIndex == sortedPairs.size())
+		{
+			node.value = leftover;
+			node.pairId = sortedPairs.size();
+			node.isLarge = false;
+			insertVectorNodeByBound(chain, node, chain.size(), _vectorComparisonCount);
+			continue;
+		}
+		partnerPos = findVectorLargePosition(chain, sortedPairs[pairIndex].id);
 		node.value = sortedPairs[pairIndex].small;
 		node.pairId = sortedPairs[pairIndex].id;
 		node.isLarge = false;
-		insertVectorNodeByBound(chain, node, partnerPos);
+		insertVectorNodeByBound(chain, node, partnerPos, _vectorComparisonCount);
 	}
 	result.reserve(chain.size() + (hasLeftover ? 1 : 0));
 	for (i = 0; i < chain.size(); ++i)
 		result.push_back(chain[i].value);
-	if (hasLeftover)
-		binaryInsertVector(result, leftover);
 	return result;
 }
 
@@ -515,6 +555,7 @@ std::deque<int> PmergeMe::mergeInsertSortDeque(const std::deque<int>& input) con
 	{
 		DequePair pair;
 
+		++_dequeComparisonCount;
 		if (input[i] <= input[i + 1])
 		{
 			pair.small = input[i];
@@ -533,7 +574,7 @@ std::deque<int> PmergeMe::mergeInsertSortDeque(const std::deque<int>& input) con
 		hasLeftover = true;
 		leftover = input[i];
 	}
-	sortedPairs = sortDequePairsByLarge(pairs);
+	sortedPairs = sortDequePairsByLarge(pairs, _dequeComparisonCount);
 	chain.push_back(DequeNode());
 	chain.back().value = sortedPairs[0].small;
 	chain.back().pairId = sortedPairs[0].id;
@@ -547,22 +588,30 @@ std::deque<int> PmergeMe::mergeInsertSortDeque(const std::deque<int>& input) con
 		node.isLarge = true;
 		chain.push_back(node);
 	}
-	insertionOrder = buildJacobsthalOrderDeque(sortedPairs.size());
+	insertionOrder = buildJacobsthalOrderDeque(sortedPairs.size()
+			+ (hasLeftover ? 1 : 0));
 	for (i = 0; i < insertionOrder.size(); ++i)
 	{
 		std::size_t pairIndex = insertionOrder[i];
-		std::size_t partnerPos = findDequeLargePosition(chain, sortedPairs[pairIndex].id);
+		std::size_t partnerPos;
 		DequeNode node;
 
+		if (hasLeftover && pairIndex == sortedPairs.size())
+		{
+			node.value = leftover;
+			node.pairId = sortedPairs.size();
+			node.isLarge = false;
+			insertDequeNodeByBound(chain, node, chain.size(), _dequeComparisonCount);
+			continue;
+		}
+		partnerPos = findDequeLargePosition(chain, sortedPairs[pairIndex].id);
 		node.value = sortedPairs[pairIndex].small;
 		node.pairId = sortedPairs[pairIndex].id;
 		node.isLarge = false;
-		insertDequeNodeByBound(chain, node, partnerPos);
+		insertDequeNodeByBound(chain, node, partnerPos, _dequeComparisonCount);
 	}
 	for (i = 0; i < chain.size(); ++i)
 		result.push_back(chain[i].value);
-	if (hasLeftover)
-		binaryInsertDeque(result, leftover);
 	return result;
 }
 
@@ -610,6 +659,8 @@ void PmergeMe::run(int argc, char** argv)
 	double dequeElapsed;
 
 	printBefore();
+	_vectorComparisonCount = 0;
+	_dequeComparisonCount = 0;
 	vectorStart = std::clock();
 	sortedVector = sortVector(_vectorInput);
 	vectorEnd = std::clock();
@@ -627,4 +678,8 @@ void PmergeMe::run(int argc, char** argv)
 		<< " elements with std::vector : " << vectorElapsed << " us" << std::endl;
 	std::cout << "Time to process a range of " << _dequeInput.size()
 		<< " elements with std::deque : " << dequeElapsed << " us" << std::endl;
+	std::cout << "Comparisons with std::vector : "
+		<< _vectorComparisonCount << std::endl;
+	std::cout << "Comparisons with std::deque : "
+		<< _dequeComparisonCount << std::endl;
 }
